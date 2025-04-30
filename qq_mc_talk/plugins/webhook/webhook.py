@@ -1,3 +1,5 @@
+import nonebot
+from nonebot.adapters.onebot.v11 import Bot
 from nonebot import get_driver, get_bot
 from nonebot.log import logger
 from fastapi import FastAPI, Request, HTTPException
@@ -29,46 +31,24 @@ class HFishWebhookPayload(BaseModel):
 # Webhook 路由，专门处理 HFish 事件
 @app.post("/hfish_webhook")
 async def receive_hfish_webhook(request: Request):
-    # 获取请求头和 body
-    headers = request.headers
-    body = await request.json()
+   # 先获取原始数据
+    raw_body = await request.body()
+    print("收到HFish原始数据:", raw_body)
 
-    # 简单 token 验证（可选，建议在 HFish 后台配置相同的 token）
-    # expected_token = "你的WebhookToken"  # 替换为你的 token
-    # received_token = headers.get("X-HFish-Token", "")
-    # if expected_token and received_token != expected_token:
-    #     logger.warning("Webhook 验证失败，token 不匹配！")
-    #     raise HTTPException(status_code=403, detail="token 错误")
-
-    # 解析 Webhook 数据
+    # 尝试解析JSON
     try:
-        payload = HFishWebhookPayload(**body)
-        logger.info(f"收到 HFish Webhook: 事件 ID={payload.event_id}, 攻击 IP={payload.attack_ip}")
-
-        # 格式化攻击信息
-        message = (
-            f"🚨 蜜罐捕获到攻击！\n"
-            f"📅 时间: {payload.attack_time}\n"
-            f"🌐 攻击 IP: {payload.attack_ip}:{payload.attack_port}\n"
-            f"🎯 蜜罐: {payload.honeypot_ip}:{payload.honeypot_port}\n"
-            f"🔗 协议: {payload.protocol}\n"
-            f"⚔️ 类型: {payload.attack_type}\n"
-            f"📝 详情: {payload.details}"
-        )
-
-        # 获取 NoneBot 机器人实例
-        bot = get_bot()
-
-        # 发送到群聊（替换为你的群号）
-        await bot.send_group_msg(
-            group_id=123456789,  # 替换为你的群号
-            message=message
-        )
-
-        # （可选）可以在这里添加其他逻辑，比如存数据库
-        # await save_to_database(payload)
-
-        return {"status": "success", "message": "HFish Webhook 接收成功"}
+        data = await request.json()
+        print("解析后的HFish数据:", data)
     except Exception as e:
-        logger.error(f"处理 HFish Webhook 失败: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"处理出错: {str(e)} ")
+        print("JSON解析失败:", str(e))
+        return {"status": "error", "message": "Invalid JSON"}
+
+    bot: Bot = nonebot.get_bot()
+    await bot.send_group_msg(
+        group_id=123456789,  # 改成你的QQ群号
+        message=f"⚠️ 检测到攻击！\n"
+                f"时间: {data.get('create_time', '未知')}\n"
+                f"类型: {data.get('type', '未知')}\n"
+                f"IP: {data.get('src_ip', '未知')}"
+    )
+    return {"status": "success"}

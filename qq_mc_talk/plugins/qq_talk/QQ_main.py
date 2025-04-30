@@ -1,8 +1,11 @@
-from nonebot import on_message, on_command
+from nonebot import on_message, on_command,logger
 from nonebot.adapters.onebot.v11 import GroupMessageEvent, Bot
 from nonebot.params import CommandArg
 from nonebot.typing import T_State
 from plugins.mc_talk import older_mc_send
+
+# 输出信息
+logger.info("qq插件加载完成")
 
 # 从配置中读取目标QQ群ID
 TARGET_GROUP_ID = 123456789  # 替换为你的QQ群ID，也可以通过.env配置

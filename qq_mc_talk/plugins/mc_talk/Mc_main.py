@@ -2,8 +2,11 @@ import json
 import asyncio
 import base64
 import websockets
-from nonebot import get_driver, get_bot
+from nonebot import get_driver, get_bot,logger
 import nonebot
+
+# 输出信息
+logger.info("Mc插件加载完成")
 
 # 从配置中读取ChatBridge信息
 config = get_driver().config
